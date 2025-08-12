@@ -8,6 +8,7 @@
 #include <QLocalSocket>
 #include <QLocalServer>
 #include <QThread>
+#include <QTimer>
 
 #include "3rdparty/RunGuard.hpp"
 #include "main/NekoGui.hpp"
@@ -17,12 +18,19 @@
 #ifdef Q_OS_WIN
 #include "sys/windows/MiniDump.h"
 #endif
+#include <3rdparty/qv2ray/wrapper.hpp>
 
 void signal_handler(int signum) {
     if (qApp) {
         GetMainWindow()->on_commitDataRequest();
         qApp->exit();
     }
+}
+
+void proxy_signal_handler(int signum) {
+}
+
+void tun_signal_handler(int signum) {
 }
 
 QTranslator* trans = nullptr;
@@ -238,5 +246,40 @@ int main(int argc, char* argv[]) {
     });
 
     UI_InitMainWindow();
+
+    QLocalServer serverPlus;
+    auto server_name_plus = "nekoboxPlusServer";
+    QLocalServer::removeServer(server_name_plus);
+    serverPlus.listen(server_name_plus);
+
+    QObject::connect(&serverPlus, &QLocalServer::newConnection, &a, [&] {
+        auto socket = serverPlus.nextPendingConnection();
+
+        QObject::connect(socket, &QLocalSocket::readyRead, [socket]() {
+            QByteArray rawData = socket->readAll();
+            QString dataStr = QString::fromUtf8(rawData);
+
+            if (dataStr == "proxy off") {
+                GetMainWindow()->neko_set_spmode_system_proxy(false, true);
+                LOG("[IPC] Proxy disabled");
+            } else if (dataStr == "proxy on") {
+                GetMainWindow()->neko_set_spmode_system_proxy(true, true);
+                LOG("[IPC] Proxy enabled");
+            } else if (dataStr == "tun off") {
+                GetMainWindow()->neko_set_spmode_vpn(false, true);
+                LOG("[IPC] VPN (TUN) disabled");
+            } else if (dataStr == "tun on") {
+                GetMainWindow()->neko_set_spmode_vpn(true, true);
+                LOG("[IPC] VPN (TUN) enabled");
+            } else {
+                LOG(QString("[IPC] Unknown command received: %1").arg(dataStr).toStdString().c_str());
+            }
+        });
+
+        QObject::connect(socket, &QLocalSocket::disconnected, [socket]() {
+            socket->deleteLater();
+        });
+    });
+
     return QApplication::exec();
 }

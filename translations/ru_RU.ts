@@ -1086,14 +1086,6 @@ https://matsuridayo.github.io/n-configuration/#vpn-tun</translation>
         <translation>Сервер</translation>
     </message>
     <message>
-        <source>Ads</source>
-        <translation>Реклама</translation>
-    </message>
-    <message>
-        <source>Document</source>
-        <translation>Документация</translation>
-    </message>
-    <message>
         <source>Update</source>
         <translation>Обновление</translation>
     </message>
@@ -1651,6 +1643,10 @@ Release note:
     </message>
     <message>
         <source>The last speed test did not exit completely, please wait. If it persists, please restart the program.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speedtest finished.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
